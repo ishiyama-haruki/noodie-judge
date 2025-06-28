@@ -17,14 +17,5 @@ export default defineConfig(({ mode }) => {
         define: {
             global: 'globalThis',
         },
-        server: {
-            proxy: {
-            '/api': {
-                target: env.VITE_NSFW_API_URL,
-                changeOrigin: true,
-                rewrite: path => path.replace(/^\/api/, '')
-            }
-            }
-        }
     }
 });

@@ -1,17 +1,5 @@
 // 必要なモジュールをインポート
 import { useRef, useState } from "react";
-import AWS from 'aws-sdk';
-
-// AWS認証情報
-AWS.config.update({
-  region: import.meta.env.VITE_AWS_REGION,
-  credentials: new AWS.Credentials({
-    accessKeyId: import.meta.env.VITE_AWS_ACCESS_KEY_ID,
-    secretAccessKey: import.meta.env.VITE_AWS_SECRET_ACCESS_KEY,
-  }),
-});
-
-const s3 = new AWS.S3();
 
 const Calc = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -44,43 +32,43 @@ const Calc = () => {
   const handleUpload = async () => {
     if (!selectedFile) return;
 
-    const key = `${import.meta.env.VITE_AWS_S3_DIR}/${selectedFile.name}`;
-    
-    const params = {
-      Bucket: import.meta.env.VITE_AWS_BUCKET_NAME,
-      Key: key,
-      Body: selectedFile,
-      ContentType: selectedFile.type,
-    };
-
-    setIsUploading(true);
-
     try {
+      setIsUploading(true);
+    
       // S3にアップロード
-      await s3.upload(params).promise();
-      const image_url = `https://${params.Bucket}.s3.${import.meta.env.VITE_AWS_REGION}.amazonaws.com/${key}`;
-
-      // S3の画像パスを取得し、NSFWの計算を実行
-      fetch(`/api/?url=${image_url}`)
-        .then(response => response.json())
-        .then(data => {
-          // console.log(data)
-          setNsfwResult(data)
-        })
-        .catch(error => {
-          console.log("NSFW失敗:", error)
-        })
-
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+    
+      const s3Response = await fetch('http://localhost:8000/api/s3up', {
+        method: 'POST',
+        body: formData
+      });
+      
+      const { s3Url } = await s3Response.json();
+      console.log("S3アップロード成功", s3Url);
+      
+      // NSFWチェック
+      const nsfwResponse = await fetch('http://localhost:8000/api/nsfwCheck', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ s3Url }),
+      });
+      
+      const nsfwData = await nsfwResponse.json();
+      console.log("NSFW結果:", nsfwData);
+      setNsfwResult(nsfwData);
+    
     } catch (error) {
-        console.error("S3アップロード失敗:", error);
+      console.error("アップロードまたはNSFW判定失敗:", error);
+      console.log(error.message)
     } finally {
       setIsUploading(false);
     }
-  };
+  }
 
   return (
     <div className="p-4 max-w-md mx-auto">
-      <h2 className="text-2xl text-black font-bold mb-2">画像のエロス診断</h2>
+      <h2 className="text-2xl text-black font-bold mb-2">画像のエロさ診断</h2>
       <label
         className="border-4 border-dotted border-black flex w-[300px] h-[300px] rounded-[12px] justify-center items-center overflow-hidden cursor-pointer"
       >
@@ -109,6 +97,7 @@ const Calc = () => {
           onClick={handleUpload}
           disabled={!selectedFile || isUploading || nsfwResult}
           className="bg-blue-500 text-white px-4 py-2 rounded"
+          // style={{ backgroundColor: "blue" }}
         >
           {isUploading ? '診断中...' : '診断'}
         </button>
@@ -116,6 +105,7 @@ const Calc = () => {
           onClick={handleReset}
           disabled={!selectedFile}
           className="bg-gray-500 text-white px-4 py-2 rounded ml-2"
+          // style={{ backgroundColor: "gray" }}
         >
           リセット
         </button>
