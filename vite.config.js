@@ -13,8 +13,6 @@ export default defineConfig(({ mode }) => {
                 refresh: true,
             }),
             react(),
-            tailwindcss(), 
-            nodePolyfills()
         ],
         define: {
             global: 'globalThis',

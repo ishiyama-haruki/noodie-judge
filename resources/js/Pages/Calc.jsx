@@ -109,7 +109,6 @@ const Calc = () => {
           onClick={handleUpload}
           disabled={!selectedFile || isUploading || nsfwResult}
           className="bg-blue-500 text-white px-4 py-2 rounded"
-          // style={{ backgroundColor: "blue" }}
         >
           {isUploading ? '診断中...' : '診断'}
         </button>
@@ -117,7 +116,6 @@ const Calc = () => {
           onClick={handleReset}
           disabled={!selectedFile}
           className="bg-gray-500 text-white px-4 py-2 rounded ml-2"
-          // style={{ backgroundColor: "gray" }}
         >
           リセット
         </button>
