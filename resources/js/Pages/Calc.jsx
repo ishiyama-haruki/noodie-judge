@@ -80,7 +80,7 @@ const Calc = () => {
 
   return (
     <div className="p-4 max-w-md mx-auto">
-      <h2 className="text-2xl text-black font-bold mb-2">画像のエロさ診断</h2>
+      <h2 className="text-2xl text-black font-bold mb-2">画像のエロス診断</h2>
       <label
         className="border-4 border-dotted border-black flex w-[300px] h-[300px] rounded-[12px] justify-center items-center overflow-hidden cursor-pointer"
       >
