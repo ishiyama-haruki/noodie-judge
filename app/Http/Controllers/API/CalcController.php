@@ -12,17 +12,27 @@ class CalcController extends Controller
     public function upload(Request $request)
     {
         $file = $request->file('file');
-        $path = $file->store('development', 's3');
-        Storage::disk('s3')->setVisibility($path, 'public');
-        $url = Storage::disk('s3')->url($path);
+        
+        $directory = env('AWS_S3_DIR', 'development');
+        $path = $file->store($directory, 's3');
 
-        return response()->json(['s3Url' => $url]);
+        // 署名付きURLを生成
+        $signedUrl = Storage::disk('s3')->temporaryUrl(
+            $path,
+            now()->addMinutes(60)
+        );
+
+        return response()->json([
+            's3Url' => $signedUrl,
+            's3Key' => $path,
+        ]);
     }
 
     public function nsfwCheck(Request $request)
     {
         $imageUrl = $request->input('s3Url');
-        $response = Http::get('http://127.0.0.1:5000', [
+        $nsfwApiUrl = env('NSFW_API_URL', 'http://127.0.0.1:5000');
+        $response = Http::get($nsfwApiUrl, [
             'url' => $imageUrl,
         ]);
 
