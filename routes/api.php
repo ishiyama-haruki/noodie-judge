@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\CalcController;
+use App\Http\Controllers\API\ImageUploadController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,3 +22,4 @@ use App\Http\Controllers\API\CalcController;
 
 Route::post('/s3up',[CalcController::class, 'upload']);
 Route::post('/nsfwCheck',[CalcController::class, 'nsfwCheck']);
+Route::post('/imageUpload',[ImageUploadController::class, 'store']);
