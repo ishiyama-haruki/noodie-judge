@@ -23,7 +23,7 @@ export default function Ranking({ items }) {
               key={i}
               className={`border rounded shadow p-2 flex items-center gap-4 ${rankClass}`}
             >
-              <div className="text-3xl font-bold w-14 text-center">
+              <div className="text-xl font-bold w-14 text-center">
                 {rank}位
               </div>
               <img
