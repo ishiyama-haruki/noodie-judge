@@ -2,8 +2,9 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\API\CalcController;
-use App\Http\Controllers\API\ImageUploadController;
+use App\Http\Controllers\API\CalcApiController;
+use App\Http\Controllers\API\ImageUploadApiController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -20,6 +21,6 @@ use App\Http\Controllers\API\ImageUploadController;
 //     return $request->user();
 // });
 
-Route::post('/s3up',[CalcController::class, 'upload']);
-Route::post('/nsfwCheck',[CalcController::class, 'nsfwCheck']);
-Route::post('/imageUpload',[ImageUploadController::class, 'store']);
+Route::post('/s3up',[CalcApiController::class, 'upload']);
+Route::post('/nsfwCheck',[CalcApiController::class, 'nsfwCheck']);
+Route::post('/imageUpload',[ImageUploadApiController::class, 'store']);

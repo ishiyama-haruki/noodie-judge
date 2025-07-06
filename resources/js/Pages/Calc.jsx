@@ -6,6 +6,7 @@ const Calc = () => {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [nsfwResult, setNsfwResult] = useState(null);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const imageInputRef = useRef(null);
 
@@ -31,58 +32,115 @@ const Calc = () => {
     setSelectedFile(null);
     setPreviewUrl(null);
     setNsfwResult(null);
+    setErrorMessage("");
     imageInputRef.current.value = ""
-    console.log("キャンセル済み")
+  };
+
+  // 画像のリサイズ処理
+  const resizeImage = (file, maxWidth, maxHeight) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+  
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          let { width, height } = img;
+  
+          // 縦横比を維持しつつサイズを制限
+          if (width > maxWidth || height > maxHeight) {
+            const ratio = Math.min(maxWidth / width, maxHeight / height);
+            width = width * ratio;
+            height = height * ratio;
+          }
+  
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+  
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('Blob生成失敗'));
+            }
+          }, file.type, 0.8); // 品質90%
+        };
+        img.onerror = (err) => reject(err);
+        img.src = event.target.result;
+      };
+  
+      reader.onerror = (err) => reject(err);
+      reader.readAsDataURL(file);
+    });
   };
 
   // メインの診断処理
   const handleUpload = async () => {
     if (!selectedFile) return;
-
+  
+    setErrorMessage("");  // エラーをリセット
     try {
       setIsUploading(true);
-    
-      // S3にアップロード
+  
+      // リサイズ
+      const resizedBlob = await resizeImage(selectedFile, 1024, 1024);
+      const resizedSizeKB = (resizedBlob.size / 1024).toFixed(2);
+      console.log(`リサイズ後ファイルサイズ: ${resizedSizeKB} KB`);
+  
       const formData = new FormData();
-      formData.append("file", selectedFile);
-    
+      formData.append("file", resizedBlob, selectedFile.name);
+  
+      // S3アップロード
       const s3Response = await fetch(ENDPOINTS.s3up, {
         method: 'POST',
         body: formData
       });
-      
+  
+      if (!s3Response.ok) {
+        const errData = await s3Response.json().catch(() => ({}));
+        throw new Error(errData.error || "画像登録に失敗しました");
+      }
+  
       const { s3Url, s3Key } = await s3Response.json();
-      console.log("S3アップロード成功", s3Url);
-      
+  
       // NSFWチェック
       const nsfwResponse = await fetch(ENDPOINTS.nsfwCheck, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ s3Url }),
       });
-      
+  
+      if (!nsfwResponse.ok) {
+        const errData = await nsfwResponse.json().catch(() => ({}));
+        throw new Error(errData.error || "スコア計算に失敗しました");
+      }
+  
       const nsfwData = await nsfwResponse.json();
       console.log("NSFW結果:", nsfwData);
       setNsfwResult(nsfwData);
-
-      // Laravel DBに保存
+  
+      // DB保存
       await fetch(ENDPOINTS.imageUpload, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           s3_key: s3Key,
           score: nsfwData.score * 100,
-         }),
-      })
+        }),
+      });
+  
       console.log("DB登録成功");
-    
+  
     } catch (error) {
-      console.error("アップロードまたはNSFW判定失敗:", error);
-      console.log(error.message)
+      console.error(error);
+      setErrorMessage(error.message || "エラーが発生しました。");
     } finally {
       setIsUploading(false);
     }
-  }
+  };
+  
 
   return (
     <div className="p-4 mt-5 max-w-md mx-auto flex flex-col items-center">
@@ -128,12 +186,24 @@ const Calc = () => {
           リセット
         </button>
       </div>
+      {errorMessage && (
+        <div className="mt-4 text-red-600 text-center">
+          {errorMessage}
+        </div>
+      )}
 
       {nsfwResult && (
         <p className="text-5xl font-bold mt-5" style={{color: "blue"}}>
           {(nsfwResult.score * 100).toFixed(2)}
         </p>
       )}
+
+      <a
+        href="/ranking"
+        className="mt-6 text-blue-600 hover:text-blue-800 underline cursor-pointer"
+      >
+        ランキングはこちら
+      </a>
     </div>
   );
 };

@@ -7,16 +7,20 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 
-class CalcController extends Controller
+class CalcApiController extends Controller
 {
     public function upload(Request $request)
     {
+        if (!$request->hasFile('file') || !$request->file('file')->isValid()) {
+            return response()->json([
+                'error' => 'ファイルがアップロードされていません、または無効です'
+            ], 422);
+        }
+
         $file = $request->file('file');
-        
         $directory = env('AWS_S3_DIR', 'development');
         $path = $file->store($directory, 's3');
 
-        // 署名付きURLを生成
         $signedUrl = Storage::disk('s3')->temporaryUrl(
             $path,
             now()->addMinutes(60)
@@ -27,6 +31,7 @@ class CalcController extends Controller
             's3Key' => $path,
         ]);
     }
+
 
     public function nsfwCheck(Request $request)
     {
