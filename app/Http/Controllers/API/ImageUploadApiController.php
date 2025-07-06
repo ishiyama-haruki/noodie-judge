@@ -7,8 +7,9 @@ use App\Models\ImageUpload;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
-class ImageUploadController extends Controller
+class ImageUploadApiController extends Controller
 {
+
     public function store(Request $request)
     {
         try {

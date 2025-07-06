@@ -3,7 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
+use App\Http\Controllers\RankingController;
+use App\Http\Controllers\CalcController;
 
 /*
 |--------------------------------------------------------------------------
@@ -16,8 +17,5 @@ use Inertia\Inertia;
 |
 */
 
-Route::get('/', function () {
-    return Inertia::render('Calc', [
-        
-    ]);
-});
+Route::get('/', [CalcController::class, 'index']);
+Route::get('/ranking', [RankingController::class, 'index']);
