@@ -11,7 +11,10 @@ class RankingController extends Controller
 {
     public function index()
     {
-        $items = ImageUpload::orderByDesc('score')->limit(50)->get();
+        $items = ImageUpload::where('visible', 1)
+            ->orderByDesc('score')
+            ->limit(50)
+            ->get();
 
         $items = $items->map(function ($item) {
             return [
