@@ -157,7 +157,10 @@ const Calc = () => {
           hidden
         />
         {!previewUrl && (
-          <span className="text-black">画像をアップロード</span>
+          <div className="text-center">
+            <p className="text-black">画像をアップロード</p>
+            <p className="text-black">※明らかに卑猥な画像は削除されます</p>
+          </div>
         )}
         {previewUrl && (
           <img
